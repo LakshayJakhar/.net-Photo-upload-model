@@ -1,0 +1,126 @@
+﻿@model Picture.Models.Customer
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>Customer</h4>
+<hr />
+
+<script>
+    function handleFileSelection(input) {
+        // Get the selected files
+        var files = input.files;
+
+        // Create a container for the file list
+        var fileListContainer = document.getElementById("fileListContainer");
+
+        // Clear the existing file list
+        fileListContainer.innerHTML = "";
+
+        // Display the selected files
+        for (var i = 0; i < files.length; i++) {
+            var file = files[i];
+            var listItem = document.createElement("li");
+            listItem.textContent = file.name;
+
+            // Add a button to remove the file
+            var removeButton = document.createElement("button");
+            removeButton.textContent = "Remove";
+            removeButton.onclick = createRemoveHandler(input, file);
+
+            // Append the remove button to the list item
+            listItem.appendChild(removeButton);
+
+            // Append the list item to the container
+            fileListContainer.appendChild(listItem);
+        }
+    }
+
+    function createRemoveHandler(input, file) {
+        return function () {
+            // Remove the file from the input's files array
+            var newFiles = Array.from(input.files).filter(function (f) {
+                return f !== file;
+            });
+
+            // Create a new FileList and assign it to the input
+            var newFileList = new DataTransfer();
+            newFiles.forEach(function (f) {
+                newFileList.items.add(f);
+            });
+            input.files = newFileList.files;
+
+            // Update the displayed file list
+            handleFileSelection(input);
+        };
+    }
+</script>
+
+<div>
+    @{
+        if (Model.CustomerImages?.Any() ?? false)
+        {
+            foreach (var image in Model.CustomerImages)
+            {
+                string imageBase64 = Convert.ToBase64String(image.Content);
+                string imageSrc = string.Format("data:" + image.MimeType + ";base64,{0}", imageBase64);
+                <img src="@imageSrc" alt="Customer Image" title="Customer Image" class="img-fluid rounded" />
+            }
+        }
+    }
+</div>
+
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
+    <div class="row">
+        <div class="col-md-4">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CustomerImages" class="control-label">Upload Additional Images</label>
+                <input type="file" name="Pictures" multiple onchange="handleFileSelection(this)" />
+            </div>
+
+            <h4>Selected Images</h4>
+            <div id="fileListContainer"></div>
+
+            <h4>Existing Images</h4>
+            <div>
+                @{
+                    if (Model.CustomerImages?.Any() ?? true)
+                    {
+                        <div class="row">
+                            <div class="form-check m-3">
+                                <input class="form-check-input" type="checkbox" id="chkRemoveImage" name="chkRemoveImage">
+                                <label class="form-check-label" for="chkRemoveImage">
+                                    <strong>Check to remove Image</strong>
+                                </label>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </div>
+    </div>
+</form>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
